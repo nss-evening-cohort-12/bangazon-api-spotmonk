@@ -80,8 +80,11 @@ class Payments(ViewSet):
     def list(self, request):
         """Handle GET requests to payment type resource"""
         payment_types = Payment.objects.all()
-
-        customer_id = Customer.objects.get(user=request.auth.user)
+        
+        try:
+            customer_id = Customer.objects.get(user=request.auth.user)
+        except AttributeError:
+            customer_id = None
 
         if customer_id is not None:
             payment_types = payment_types.filter(customer__id=customer_id.id)
