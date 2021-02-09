@@ -82,12 +82,12 @@ class Payments(ViewSet):
         payment_types = Payment.objects.all()
         
         try:
-            customer_id = Customer.objects.get(user=request.auth.user)
+            customer = Customer.objects.get(user=request.auth.user)
         except AttributeError:
-            customer_id = None
+            customer = None
 
-        if customer_id is not None:
-            payment_types = payment_types.filter(customer__id=customer_id.id)
+        if customer is not None:
+            payment_types = payment_types.filter(customer__id=customer.id)
 
         serializer = PaymentSerializer(
             payment_types, many=True, context={'request': request})
