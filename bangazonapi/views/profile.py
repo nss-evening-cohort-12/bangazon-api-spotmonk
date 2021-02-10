@@ -282,6 +282,7 @@ class Profile(ViewSet):
                 favorites, many=True, context={'request': request})
             return Response(serializer.data)
 
+
         if request.method == "POST":
             seller_id = self.request.data["seller"]
             if seller_id is not None:
