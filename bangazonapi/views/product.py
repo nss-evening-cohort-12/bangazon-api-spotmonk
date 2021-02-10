@@ -4,13 +4,21 @@ from django.core.files.base import ContentFile
 from django.http import HttpResponseServerError
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
+from rest_framework.decorators import action
 from rest_framework import serializers
 from rest_framework import status
-from bangazonapi.models import Product, Customer, ProductCategory
+from bangazonapi.models import Product, Customer, ProductCategory, Like
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
 
 
+class LikeSerializer(serializers.ModelSerializer):
+    """Json seriaalizer for Likes"""
+
+    class Meta:
+        model = Like
+        fields = ('id', 'product')
+        depth = 1
 class ProductSerializer(serializers.ModelSerializer):
     """JSON serializer for products"""
     class Meta:
@@ -288,3 +296,39 @@ class Products(ViewSet):
         serializer = ProductSerializer(
             products, many=True, context={'request': request})
         return Response(serializer.data)
+
+
+    @action(methods=['get'], detail=False)
+    def liked(self, request):
+
+        customer = Customer.objects.get(user=request.auth.user)
+        likes = Like.objects.filter(customer=customer)
+        serializer = LikeSerializer(likes, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+    @action(methods=['post','delete'], detail=True)
+    def like(self, request, pk=None):
+        product = Product.objects.get(pk=pk)
+        customer = Customer.objects.get(user=request.auth.user)
+        if request.method == "POST":
+            
+            try:
+                like = Like.objects.get(customer=customer, product=product)
+            except Like.DoesNotExist as ex:
+                new_like = Like()
+                new_like.customer = customer
+                new_like.product = product
+                new_like.save()
+
+                serializer = LikeSerializer(new_like, context={'request': request})
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        if request.method == "DELETE":
+            try:
+                like = Like.objects.get(customer=customer, product=product)
+                like.delete()
+            except Like.DoesNotExist as ex:
+                return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+            
+            return Response({}, status=status.HTTP_204_NO_CONTENT)
