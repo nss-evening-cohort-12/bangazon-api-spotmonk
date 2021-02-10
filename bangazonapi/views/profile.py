@@ -207,7 +207,6 @@ class Profile(ViewSet):
 
             try:
                 open_order = Order.objects.get(customer=current_user, payment_type__isnull=True)
-                print(open_order)
             except Order.DoesNotExist as ex:
                 open_order = Order()
                 open_order.created_date = datetime.datetime.now()
@@ -226,7 +225,7 @@ class Profile(ViewSet):
 
         return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    @action(methods=['get'], detail=False)
+    @action(methods=['get','post'], detail=False)
     def favoritesellers(self, request):
         """
         @api {GET} /profile/favoritesellers GET favorite sellers
@@ -274,12 +273,42 @@ class Profile(ViewSet):
                 }
             ]
         """
-        customer = Customer.objects.get(user=request.auth.user)
-        favorites = Favorite.objects.filter(customer=customer)
+        if request.method == "GET":
 
-        serializer = FavoriteSerializer(
-            favorites, many=True, context={'request': request})
-        return Response(serializer.data)
+            customer = Customer.objects.get(user=request.auth.user)
+            favorites = Favorite.objects.filter(customer=customer)
+
+            serializer = FavoriteSerializer(
+                favorites, many=True, context={'request': request})
+            return Response(serializer.data)
+
+        if request.method == "POST":
+            seller_id = self.request.data["seller"]
+            if seller_id is not None:
+                seller = Customer.objects.get(pk=seller_id)
+                customer = Customer.objects.get(user=request.auth.user)
+                try:
+                    favorite = Favorite.objects.get(customer=customer, seller=seller)
+                except Favorite.DoesNotExist as ex:
+                    new_favorite = Favorite()
+                    new_favorite.customer = customer
+                    new_favorite.seller = seller
+                    new_favorite.save()
+        
+                    serializer = FavoriteSerializer(
+                        new_favorite, context={'request': request})
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+                serializer = FavoriteSerializer(
+                        favorite, context={'request': request})
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+            
+
+
 
 
 class LineItemSerializer(serializers.HyperlinkedModelSerializer):
