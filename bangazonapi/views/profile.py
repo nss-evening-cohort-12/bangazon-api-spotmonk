@@ -273,9 +273,10 @@ class Profile(ViewSet):
                 }
             ]
         """
+        customer = Customer.objects.get(user=request.auth.user)
         if request.method == "GET":
 
-            customer = Customer.objects.get(user=request.auth.user)
+           
             favorites = Favorite.objects.filter(customer=customer)
 
             serializer = FavoriteSerializer(
@@ -287,7 +288,6 @@ class Profile(ViewSet):
             seller_id = self.request.data["seller"]
             if seller_id is not None:
                 seller = Customer.objects.get(pk=seller_id)
-                customer = Customer.objects.get(user=request.auth.user)
                 try:
                     favorite = Favorite.objects.get(customer=customer, seller=seller)
                 except Favorite.DoesNotExist as ex:
@@ -304,7 +304,7 @@ class Profile(ViewSet):
                         favorite, context={'request': request})
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
             
