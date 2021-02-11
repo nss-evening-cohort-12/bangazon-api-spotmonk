@@ -17,7 +17,7 @@ def expensive_list(request):
                     p.description,
                     p.price
                 from bangazonapi_product p
-                where p.price > 999
+                where p.price >= 1000
             """)
 
             dataset = db_cursor.fetchall()
@@ -30,7 +30,6 @@ def expensive_list(request):
                 products[pid]['description'] = row["description"]
                 products[pid]['price'] = row["price"]
 
-        print(products)
         template = 'products/expensive.html'
         context = {
             'expensive_list': products.values
