@@ -1,0 +1,17 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Completed Orders Report</title>
+  </head>
+  <body>
+    <h1>Completed Orders</h1>
+    {% for order in completed_list %}
+        <p>
+        <h2>{{order.fullname}}</h2>
+        Created:{{order.created_date}}
+        </p>
+    {% endfor %}
+  </body>
+</html>
