@@ -98,7 +98,6 @@ class OrderTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(json_response["payment_type"], "http://testserver/paymenttypes/1")
         
-    # TODO: New line item is not added to closed order
     def test_new_line_new_order(self):
 
         # add product to order
