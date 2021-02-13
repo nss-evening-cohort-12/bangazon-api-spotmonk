@@ -1,0 +1,19 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Customer's Favorite Sellers</title>
+  </head>
+  <body>
+    <h1>Customer's Favorite Sellers</h1>
+    {% for customer in favorite_list %}
+        <h2>{{customer.customername}}</h2>
+          <ul>
+          {% for seller in customer.sellers %}
+            <li>{{seller}}</li>
+          {% endfor %}
+          </ul>
+    {% endfor %}
+  </body>
+</html>
