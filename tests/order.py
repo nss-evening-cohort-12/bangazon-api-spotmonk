@@ -99,3 +99,40 @@ class OrderTests(APITestCase):
         self.assertEqual(json_response["payment_type"], "http://testserver/paymenttypes/1")
         
     # TODO: New line item is not added to closed order
+    def test_new_line_new_order(self):
+
+        # add product to order
+        carturl = "/cart"
+        data = { "product_id": 1 }
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
+        response = self.client.post(carturl, data, format='json')
+        
+        # close order
+        PaymentTests.test_create_payment_type(self)
+        url = "/orders/1"
+        paymentdata = { "payment_type": 1 }
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
+        response = self.client.put(url, paymentdata, format='json')
+        
+        # assert length of cart items is 1
+        response = self.client.get(url, None, format='json')
+        json_response = json.loads(response.content)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response["lineitems"]), 1)
+        
+        # add product to hopefully second order
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
+        response = self.client.post(carturl, data, format='json')
+        
+        #assert length of original cart is still 1
+        response = self.client.get(url, None, format='json')
+        json_response = json.loads(response.content)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response["lineitems"]), 1)
+        
+        #assert length of second cart is 1
+        url2 = '/orders/2'
+        response = self.client.get(url2, None, format='json')
+        json_response = json.loads(response.content)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response["lineitems"]), 1)
