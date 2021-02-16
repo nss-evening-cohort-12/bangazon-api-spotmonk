@@ -113,8 +113,8 @@ class ProductTests(APITestCase):
         #create product
         self.test_create_product()
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
+        
         #verify average rating is 0
-
         url = "/products/1"
         response = self.client.get(url, None, form=json)
         json_response = response.json()

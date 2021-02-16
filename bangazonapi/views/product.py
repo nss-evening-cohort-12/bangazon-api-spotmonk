@@ -166,7 +166,6 @@ class Products(ViewSet):
         try:
             product = Product.objects.get(pk=pk)
             serializer = ProductSerializer(product, context={'request': request})
-            print(serializer.data)
             return Response(serializer.data)
         except Product.DoesNotExist as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
