@@ -7,10 +7,17 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import serializers
 from rest_framework import status
-from bangazonapi.models import Product, Customer, ProductCategory, Like
+from bangazonapi.models import Product, Customer, ProductCategory, Like, Rating
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
 
+
+class RatingSerializer(serializers.ModelSerializer):
+    """Json serializer for Ratings"""
+    class Meta:
+        model = Rating
+        fields = ('customer', 'product', 'score')
+        depth = 1
 
 class LikeSerializer(serializers.ModelSerializer):
     """Json seriaalizer for Likes"""
@@ -159,6 +166,7 @@ class Products(ViewSet):
         try:
             product = Product.objects.get(pk=pk)
             serializer = ProductSerializer(product, context={'request': request})
+            print(serializer.data)
             return Response(serializer.data)
         except Product.DoesNotExist as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
@@ -331,6 +339,35 @@ class Products(ViewSet):
                 like = Like.objects.get(customer=customer, product=product)
                 like.delete()
             except Like.DoesNotExist as ex:
+                return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+            
+            return Response({}, status=status.HTTP_204_NO_CONTENT)
+
+
+    @action(methods=['post','delete'], detail=True)
+    def rate(self, request, pk=None):
+        product = Product.objects.get(pk=pk)
+        customer = Customer.objects.get(user=request.auth.user)
+        if request.method == "POST":
+            try:
+                rating_object = Rating.objects.get(customer=customer, product=product)
+            except Rating.DoesNotExist as ex:
+                new_rating = Rating()
+                new_rating.customer = customer
+                new_rating.product = product
+                new_rating.score = request.data["rating"]
+                new_rating.save()
+
+                serializer = RatingSerializer(new_rating, context={'request': request})
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return Response({'message': "Cannot Rate More Than Once"}, status=status.HTTP_403_FORBIDDEN)
+        
+        if request.method == "DELETE":
+            try:
+                rating = Rating.objects.get(customer=customer, product=product)
+                rating.delete()
+            except Rating.DoesNotExist as ex:
                 return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
             
             return Response({}, status=status.HTTP_204_NO_CONTENT)
